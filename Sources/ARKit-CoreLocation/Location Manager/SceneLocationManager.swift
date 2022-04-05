@@ -38,7 +38,19 @@ public final class SceneLocationManager {
     public var locationEstimateMethod: LocationEstimateMethod = .mostRelevantEstimate
     public let locationManager = LocationManager()
 
-    var sceneLocationEstimates = [SceneLocationEstimate]()
+    var sceneLocationEstimates = [SceneLocationEstimate]() {
+         didSet {
+             let sortedLocationEstimates = sceneLocationEstimates.sorted(by: {
+                 if $0.location.horizontalAccuracy == $1.location.horizontalAccuracy {
+                     return $0.location.timestamp > $1.location.timestamp
+                 }
+
+                 return $0.location.horizontalAccuracy < $1.location.horizontalAccuracy
+             })
+
+             bestLocationEstimate = sortedLocationEstimates.first
+         }
+     }
 
     var updateEstimatesTimer: Timer?
 
@@ -46,17 +58,7 @@ public final class SceneLocationManager {
     /// This takes into account horizontal accuracy, and the time at which the estimation was taken
     /// favouring the most accurate, and then the most recent result.
     /// This doesn't indicate where the user currently is.
-    public var bestLocationEstimate: SceneLocationEstimate? {
-        let sortedLocationEstimates = sceneLocationEstimates.sorted(by: {
-            if $0.location.horizontalAccuracy == $1.location.horizontalAccuracy {
-                return $0.location.timestamp > $1.location.timestamp
-            }
-
-            return $0.location.horizontalAccuracy < $1.location.horizontalAccuracy
-        })
-
-        return sortedLocationEstimates.first
-    }
+    public var bestLocationEstimate: SceneLocationEstimate?
 
     public var currentLocation: CLLocation? {
         if locationEstimateMethod == .coreLocationDataOnly { return locationManager.currentLocation }
